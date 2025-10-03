@@ -24,12 +24,28 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        // --- FIX: Use global variables instead of ES Module imports ---
-        // Destructure Hooks from the global React object
-        const { useState, useEffect, useCallback, useMemo } = React;
+        // --- SAFE INITIALIZATION: Declare Lucide Icons as variables ---
+        const Calendar = lucide.Calendar;
+        const Flame = lucide.Flame;
+        const Heart = lucide.Heart;
+        const BookOpen = lucide.BookOpen;
+        const Plus = lucide.Plus;
+        const X = lucide.X;
+        const Check = lucide.Check;
+        const AlertCircle = lucide.AlertCircle;
+        const Wind = lucide.Wind;
+        const Dumbbell = lucide.Dumbbell;
+        const PenTool = lucide.PenTool;
+        const Sparkles = lucide.Sparkles;
+        const TrendingUp = lucide.TrendingUp;
+        const BarChart3 = lucide.BarChart3;
+        const User = lucide.User;
+        const LogOut = lucide.LogOut;
+        const ChevronLeft = lucide.ChevronLeft;
+        const ChevronRight = lucide.ChevronRight;
+        const Activity = lucide.Activity;
         
-        // Destructure Icons from the global lucide object
-        const { Calendar, Flame, Heart, BookOpen, Plus, X, Check, AlertCircle, Wind, Dumbbell, PenTool, Sparkles, TrendingUp, BarChart3, User, LogOut, ChevronLeft, ChevronRight, Activity } = lucide; 
+        // --- SAFEST APPROACH: Do NOT destructure React hooks here. Use React.useState, etc. directly. ---
         
         // Simulated Database
         const DB = {
@@ -61,41 +77,41 @@
           }
         };
         
-        // FIX: Removed 'export default'
+        // FIX: Removed 'export default' and using React prefixes for stability
         function FaithfulSteps() {
-          const [isLoggedIn, setIsLoggedIn] = useState(false);
-          const [showLogin, setShowLogin] = useState(true);
-          const [email, setEmail] = useState('');
-          const [password, setPassword] = useState('');
-          const [name, setName] = useState('');
-          const [currentUser, setCurrentUser] = useState(null);
-          const [showProfile, setShowProfile] = useState(false);
-          const [showCalendar, setShowCalendar] = useState(false);
-          const [showAnalytics, setShowAnalytics] = useState(false);
+          const [isLoggedIn, setIsLoggedIn] = React.useState(false);
+          const [showLogin, setShowLogin] = React.useState(true);
+          const [email, setEmail] = React.useState('');
+          const [password, setPassword] = React.useState('');
+          const [name, setName] = React.useState('');
+          const [currentUser, setCurrentUser] = React.useState(null);
+          const [showProfile, setShowProfile] = React.useState(false);
+          const [showCalendar, setShowCalendar] = React.useState(false);
+          const [showAnalytics, setShowAnalytics] = React.useState(false);
           
-          const [currentDate] = useState(new Date());
-          const [calendarMonth, setCalendarMonth] = useState(new Date());
+          const [currentDate] = React.useState(new Date());
+          const [calendarMonth, setCalendarMonth] = React.useState(new Date());
           
-          const [habits, setHabits] = useState([
+          const [habits, setHabits] = React.useState([
             { id: 1, name: 'Morning Prayer', streak: 0, completed: false },
             { id: 2, name: 'Scripture Reading', streak: 0, completed: false },
             { id: 3, name: 'Exercise', streak: 0, completed: false },
             { id: 4, name: 'Gratitude Journal', streak: 0, completed: false }
           ]);
-          const [dailyRecords, setDailyRecords] = useState({});
-          const [showHelp, setShowHelp] = useState(false);
-          const [helpStep, setHelpStep] = useState('menu');
-          const [whisper, setWhisper] = useState('');
-          const [verse, setVerse] = useState('');
-          const [temptationsOvercome, setTemptationsOvercome] = useState(0);
-          const [showAddHabit, setShowAddHabit] = useState(false);
-          const [newHabitName, setNewHabitName] = useState('');
-          const [breathingCount, setBreathingCount] = useState(0);
-          const [breathingPhase, setBreathingPhase] = useState('Breathe In');
-          const [selectedVerse, setSelectedVerse] = useState('');
-          const [showCelebration, setShowCelebration] = useState(false);
+          const [dailyRecords, setDailyRecords] = React.useState({});
+          const [showHelp, setShowHelp] = React.useState(false);
+          const [helpStep, setHelpStep] = React.useState('menu');
+          const [whisper, setWhisper] = React.useState('');
+          const [verse, setVerse] = React.useState('');
+          const [temptationsOvercome, setTemptationsOvercome] = React.useState(0);
+          const [showAddHabit, setShowAddHabit] = React.useState(false);
+          const [newHabitName, setNewHabitName] = React.useState('');
+          const [breathingCount, setBreathingCount] = React.useState(0);
+          const [breathingPhase, setBreathingPhase] = React.useState('Breathe In');
+          const [selectedVerse, setSelectedVerse] = React.useState('');
+          const [showCelebration, setShowCelebration] = React.useState(false);
         
-          const bibleVerses = useMemo(() => [
+          const bibleVerses = React.useMemo(() => [
             "I can do all things through Christ who strengthens me. - Philippians 4:13",
             "The Lord is my strength and my shield; my heart trusts in him. - Psalm 28:7",
             "Be strong and courageous. Do not be afraid; the Lord your God is with you. - Joshua 1:9",
@@ -103,14 +119,14 @@
             "For God gave us a spirit not of fear but of power and love and self-control. - 2 Timothy 1:7"
           ], []);
         
-          const distractionActivities = useMemo(() => [
+          const distractionActivities = React.useMemo(() => [
             { icon: Dumbbell, title: "20 Push-ups", description: "Get your blood flowing!" },
             { icon: PenTool, title: "Journal Prompt", description: "What are you grateful for?" },
             { icon: Heart, title: "Call a Friend", description: "Reach out to someone" },
             { icon: BookOpen, title: "Read Scripture", description: "5 minutes in God's Word" }
           ], []);
         
-          useEffect(() => {
+          React.useEffect(() => {
             const savedEmail = localStorage.getItem('currentUser');
             if (savedEmail) {
               const userData = DB.getUser(savedEmail);
@@ -122,7 +138,7 @@
             }
           }, []);
         
-          useEffect(() => {
+          React.useEffect(() => {
             if (isLoggedIn && currentUser) {
               saveUserData();
             }
@@ -200,7 +216,7 @@
             return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
           };
         
-          useEffect(() => {
+          React.useEffect(() => {
             if (isLoggedIn) {
               const today = getDateKey(currentDate);
               setDailyRecords(prev => ({
@@ -216,10 +232,10 @@
             }
           }, [habits, temptationsOvercome, whisper, verse, isLoggedIn, currentDate]);
         
-          const completedCount = useMemo(() => habits.filter(h => h.completed).length, [habits]);
-          const totalStreak = useMemo(() => habits.reduce((sum, h) => sum + h.streak, 0), [habits]);
+          const completedCount = React.useMemo(() => habits.filter(h => h.completed).length, [habits]);
+          const totalStreak = React.useMemo(() => habits.reduce((sum, h) => sum + h.streak, 0), [habits]);
         
-          const last5DaysAnalytics = useMemo(() => {
+          const last5DaysAnalytics = React.useMemo(() => {
             const analytics = [];
             for (let i = 4; i >= 0; i--) {
               const date = new Date(currentDate);
@@ -238,7 +254,7 @@
             return analytics;
           }, [dailyRecords, currentDate]);
         
-          const todayPrediction = useMemo(() => {
+          const todayPrediction = React.useMemo(() => {
             const validDays = last5DaysAnalytics.filter(d => d.totalHabits > 0);
             if (validDays.length === 0) {
               return {
@@ -270,7 +286,7 @@
             return { predictedRate: Math.round(recentRate || avgRate), trend, message, confidence };
           }, [last5DaysAnalytics]);
         
-          const toggleHabit = useCallback((id) => {
+          const toggleHabit = React.useCallback((id) => {
             setHabits(prev => prev.map(habit => {
               if (habit.id === id) {
                 if (!habit.completed) {
@@ -287,7 +303,7 @@
             }));
           }, []);
         
-          const addHabit = useCallback(() => {
+          const addHabit = React.useCallback(() => {
             if (newHabitName.trim()) {
               setHabits(prev => [...prev, {
                 id: Date.now(),
@@ -300,23 +316,23 @@
             }
           }, [newHabitName]);
         
-          const deleteHabit = useCallback((id) => {
+          const deleteHabit = React.useCallback((id) => {
             setHabits(prev => prev.filter(habit => habit.id !== id));
           }, []);
         
-          const startBreathingExercise = useCallback(() => {
+          const startBreathingExercise = React.useCallback(() => {
             setHelpStep('breathing');
             setBreathingCount(0);
             setBreathingPhase('Breathe In');
           }, []);
         
-          const openHelp = useCallback(() => {
+          const openHelp = React.useCallback(() => {
             setShowHelp(true);
             setHelpStep('menu');
             setSelectedVerse(bibleVerses[Math.floor(Math.random() * bibleVerses.length)]);
           }, [bibleVerses]);
         
-          const closeHelp = useCallback(() => {
+          const closeHelp = React.useCallback(() => {
             setShowHelp(false);
             setTimeout(() => {
               setHelpStep('menu');
@@ -324,13 +340,13 @@
             }, 300);
           }, []);
         
-          const completeHelp = useCallback(() => {
+          const completeHelp = React.useCallback(() => {
             setTemptationsOvercome(prev => prev + 1);
             setHelpStep('complete');
             setTimeout(() => closeHelp(), 2500);
           }, [closeHelp]);
         
-          useEffect(() => {
+          React.useEffect(() => {
             if (helpStep === 'breathing' && breathingCount < 4) {
               const phases = ['Breathe In', 'Hold', 'Breathe Out', 'Hold'];
               const durations = [4000, 4000, 4000, 4000];
@@ -1014,8 +1030,22 @@
           );
         }
 
-        // FIX: Standard React 18 render call
-        ReactDOM.createRoot(document.getElementById('root')).render(<FaithfulSteps />);
+        // --- GLOBAL CATCH BLOCK FOR DEBUGGING ---
+        try {
+            ReactDOM.createRoot(document.getElementById('root')).render(<FaithfulSteps />);
+        } catch (error) {
+            // Display error clearly if the React/Babel process fails.
+            document.getElementById('root').innerHTML = `
+                <div style="color: red; padding: 20px; font-family: monospace; white-space: pre-wrap; background-color: #ffeaea; border: 2px solid red;">
+                    ❌ **FATAL APPLICATION CRASH** ❌<br>
+                    Please check the browser console for details (F12).<br><br>
+                    **Error Message:** ${error.toString()}<br>
+                    **Source of Crash:** ${error.stack.split('\n')[1] || 'Unknown line.'}<br><br>
+                    **Fix Check:** This usually means a React hook rule was broken or the Babel environment is unstable.
+                </div>
+            `;
+            console.error("Fatal Error during Babel compilation or React render:", error);
+        }
     </script>
 </body>
 </html>
