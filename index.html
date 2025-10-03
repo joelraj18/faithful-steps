@@ -20,8 +20,990 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        // PASTE THE ENTIRE REACT COMPONENT CODE HERE
-        // (I'll provide this in the next step)
+        import React, { useState, useEffect, useCallback, useMemo } from 'react';
+        import { Calendar, Flame, Heart, BookOpen, Plus, X, Check, AlertCircle, Wind, Dumbbell, PenTool, Sparkles, TrendingUp, BarChart3, User, LogOut, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+        
+        // Simulated Database
+        const DB = {
+          users: {},
+          
+          saveUser(email, password, userData) {
+            this.users[email] = { password, ...userData };
+            localStorage.setItem('faithfulStepsDB', JSON.stringify(this.users));
+          },
+          
+          getUser(email) {
+            const stored = localStorage.getItem('faithfulStepsDB');
+            if (stored) {
+              this.users = JSON.parse(stored);
+            }
+            return this.users[email];
+          },
+          
+          updateUser(email, userData) {
+            if (this.users[email]) {
+              this.users[email] = { ...this.users[email], ...userData };
+              localStorage.setItem('faithfulStepsDB', JSON.stringify(this.users));
+            }
+          },
+          
+          authenticateUser(email, password) {
+            const user = this.getUser(email);
+            return user && user.password === password;
+          }
+        };
+        
+        export default function FaithfulSteps() {
+          const [isLoggedIn, setIsLoggedIn] = useState(false);
+          const [showLogin, setShowLogin] = useState(true);
+          const [email, setEmail] = useState('');
+          const [password, setPassword] = useState('');
+          const [name, setName] = useState('');
+          const [currentUser, setCurrentUser] = useState(null);
+          const [showProfile, setShowProfile] = useState(false);
+          const [showCalendar, setShowCalendar] = useState(false);
+          const [showAnalytics, setShowAnalytics] = useState(false);
+          
+          const [currentDate] = useState(new Date());
+          const [calendarMonth, setCalendarMonth] = useState(new Date());
+          
+          const [habits, setHabits] = useState([
+            { id: 1, name: 'Morning Prayer', streak: 0, completed: false },
+            { id: 2, name: 'Scripture Reading', streak: 0, completed: false },
+            { id: 3, name: 'Exercise', streak: 0, completed: false },
+            { id: 4, name: 'Gratitude Journal', streak: 0, completed: false }
+          ]);
+          const [dailyRecords, setDailyRecords] = useState({});
+          const [showHelp, setShowHelp] = useState(false);
+          const [helpStep, setHelpStep] = useState('menu');
+          const [whisper, setWhisper] = useState('');
+          const [verse, setVerse] = useState('');
+          const [temptationsOvercome, setTemptationsOvercome] = useState(0);
+          const [showAddHabit, setShowAddHabit] = useState(false);
+          const [newHabitName, setNewHabitName] = useState('');
+          const [breathingCount, setBreathingCount] = useState(0);
+          const [breathingPhase, setBreathingPhase] = useState('Breathe In');
+          const [selectedVerse, setSelectedVerse] = useState('');
+          const [showCelebration, setShowCelebration] = useState(false);
+        
+          const bibleVerses = useMemo(() => [
+            "I can do all things through Christ who strengthens me. - Philippians 4:13",
+            "The Lord is my strength and my shield; my heart trusts in him. - Psalm 28:7",
+            "Be strong and courageous. Do not be afraid; the Lord your God is with you. - Joshua 1:9",
+            "Cast all your anxiety on him because he cares for you. - 1 Peter 5:7",
+            "For God gave us a spirit not of fear but of power and love and self-control. - 2 Timothy 1:7"
+          ], []);
+        
+          const distractionActivities = useMemo(() => [
+            { icon: Dumbbell, title: "20 Push-ups", description: "Get your blood flowing!" },
+            { icon: PenTool, title: "Journal Prompt", description: "What are you grateful for?" },
+            { icon: Heart, title: "Call a Friend", description: "Reach out to someone" },
+            { icon: BookOpen, title: "Read Scripture", description: "5 minutes in God's Word" }
+          ], []);
+        
+          useEffect(() => {
+            const savedEmail = localStorage.getItem('currentUser');
+            if (savedEmail) {
+              const userData = DB.getUser(savedEmail);
+              if (userData) {
+                setCurrentUser({ email: savedEmail, ...userData });
+                setIsLoggedIn(true);
+                loadUserData(userData);
+              }
+            }
+          }, []);
+        
+          useEffect(() => {
+            if (isLoggedIn && currentUser) {
+              saveUserData();
+            }
+          }, [habits, dailyRecords, temptationsOvercome, whisper, verse]);
+        
+          const loadUserData = (userData) => {
+            setHabits(userData.habits || habits);
+            setDailyRecords(userData.dailyRecords || {});
+            setTemptationsOvercome(userData.temptationsOvercome || 0);
+            setWhisper(userData.whisper || '');
+            setVerse(userData.verse || '');
+            setName(userData.name || '');
+          };
+        
+          const saveUserData = () => {
+            if (currentUser) {
+              DB.updateUser(currentUser.email, {
+                habits,
+                dailyRecords,
+                temptationsOvercome,
+                whisper,
+                verse,
+                name
+              });
+            }
+          };
+        
+          const handleLogin = () => {
+            if (DB.authenticateUser(email, password)) {
+              const userData = DB.getUser(email);
+              setCurrentUser({ email, ...userData });
+              setIsLoggedIn(true);
+              localStorage.setItem('currentUser', email);
+              loadUserData(userData);
+            } else {
+              alert('Invalid credentials');
+            }
+          };
+        
+          const handleRegister = () => {
+            if (!email || !password || !name) {
+              alert('Please fill all fields');
+              return;
+            }
+            if (DB.getUser(email)) {
+              alert('User already exists');
+              return;
+            }
+            
+            const userData = {
+              name,
+              habits,
+              dailyRecords: {},
+              temptationsOvercome: 0,
+              whisper: '',
+              verse: ''
+            };
+            
+            DB.saveUser(email, password, userData);
+            setCurrentUser({ email, ...userData });
+            setIsLoggedIn(true);
+            localStorage.setItem('currentUser', email);
+          };
+        
+          const handleLogout = () => {
+            setIsLoggedIn(false);
+            setCurrentUser(null);
+            localStorage.removeItem('currentUser');
+            setEmail('');
+            setPassword('');
+            setShowProfile(false);
+          };
+        
+          const getDateKey = (date) => {
+            return `${date.getFullYear()}-${date.getMonth() + 1}-${date.getDate()}`;
+          };
+        
+          useEffect(() => {
+            if (isLoggedIn) {
+              const today = getDateKey(currentDate);
+              setDailyRecords(prev => ({
+                ...prev,
+                [today]: {
+                  habits: habits.map(h => ({ id: h.id, name: h.name, completed: h.completed })),
+                  temptationsOvercome,
+                  whisper,
+                  verse,
+                  completionRate: habits.length > 0 ? (habits.filter(h => h.completed).length / habits.length * 100) : 0
+                }
+              }));
+            }
+          }, [habits, temptationsOvercome, whisper, verse, isLoggedIn, currentDate]);
+        
+          const completedCount = useMemo(() => habits.filter(h => h.completed).length, [habits]);
+          const totalStreak = useMemo(() => habits.reduce((sum, h) => sum + h.streak, 0), [habits]);
+        
+          const last5DaysAnalytics = useMemo(() => {
+            const analytics = [];
+            for (let i = 4; i >= 0; i--) {
+              const date = new Date(currentDate);
+              date.setDate(date.getDate() - i);
+              const key = getDateKey(date);
+              const record = dailyRecords[key];
+              
+              analytics.push({
+                date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+                completionRate: record?.completionRate || 0,
+                habitsCompleted: record?.habits?.filter(h => h.completed).length || 0,
+                totalHabits: record?.habits?.length || 0,
+                victories: record?.temptationsOvercome || 0
+              });
+            }
+            return analytics;
+          }, [dailyRecords, currentDate]);
+        
+          const todayPrediction = useMemo(() => {
+            const validDays = last5DaysAnalytics.filter(d => d.totalHabits > 0);
+            if (validDays.length === 0) {
+              return {
+                predictedRate: 0,
+                trend: 'neutral',
+                message: 'Start building your streak! Today is a great day to begin.',
+                confidence: 'low'
+              };
+            }
+        
+            const avgRate = validDays.reduce((sum, d) => sum + d.completionRate, 0) / validDays.length;
+            const recentRate = validDays.slice(-3).reduce((sum, d) => sum + d.completionRate, 0) / Math.min(3, validDays.length);
+            
+            let trend = 'stable';
+            if (recentRate > avgRate + 10) trend = 'improving';
+            else if (recentRate < avgRate - 10) trend = 'declining';
+        
+            let message = '';
+            let confidence = validDays.length >= 3 ? 'high' : validDays.length >= 2 ? 'medium' : 'low';
+            
+            if (trend === 'improving') {
+              message = `You're on fire! Your consistency is improving. Expected: ${Math.round(recentRate)}%`;
+            } else if (trend === 'declining') {
+              message = `Stay strong! Recent dip detected. Let's bounce back with ${Math.round(avgRate)}%`;
+            } else {
+              message = `Steady progress! You're maintaining ${Math.round(avgRate)}% consistency.`;
+            }
+        
+            return { predictedRate: Math.round(recentRate || avgRate), trend, message, confidence };
+          }, [last5DaysAnalytics]);
+        
+          const toggleHabit = useCallback((id) => {
+            setHabits(prev => prev.map(habit => {
+              if (habit.id === id) {
+                if (!habit.completed) {
+                  setShowCelebration(true);
+                  setTimeout(() => setShowCelebration(false), 2000);
+                }
+                return {
+                  ...habit,
+                  completed: !habit.completed,
+                  streak: !habit.completed ? habit.streak + 1 : Math.max(0, habit.streak - 1)
+                };
+              }
+              return habit;
+            }));
+          }, []);
+        
+          const addHabit = useCallback(() => {
+            if (newHabitName.trim()) {
+              setHabits(prev => [...prev, {
+                id: Date.now(),
+                name: newHabitName.trim(),
+                streak: 0,
+                completed: false
+              }]);
+              setNewHabitName('');
+              setShowAddHabit(false);
+            }
+          }, [newHabitName]);
+        
+          const deleteHabit = useCallback((id) => {
+            setHabits(prev => prev.filter(habit => habit.id !== id));
+          }, []);
+        
+          const startBreathingExercise = useCallback(() => {
+            setHelpStep('breathing');
+            setBreathingCount(0);
+            setBreathingPhase('Breathe In');
+          }, []);
+        
+          const openHelp = useCallback(() => {
+            setShowHelp(true);
+            setHelpStep('menu');
+            setSelectedVerse(bibleVerses[Math.floor(Math.random() * bibleVerses.length)]);
+          }, [bibleVerses]);
+        
+          const closeHelp = useCallback(() => {
+            setShowHelp(false);
+            setTimeout(() => {
+              setHelpStep('menu');
+              setBreathingCount(0);
+            }, 300);
+          }, []);
+        
+          const completeHelp = useCallback(() => {
+            setTemptationsOvercome(prev => prev + 1);
+            setHelpStep('complete');
+            setTimeout(() => closeHelp(), 2500);
+          }, [closeHelp]);
+        
+          useEffect(() => {
+            if (helpStep === 'breathing' && breathingCount < 4) {
+              const phases = ['Breathe In', 'Hold', 'Breathe Out', 'Hold'];
+              const durations = [4000, 4000, 4000, 4000];
+              
+              const timer = setTimeout(() => {
+                const idx = phases.indexOf(breathingPhase);
+                const nextIdx = (idx + 1) % phases.length;
+                
+                if (nextIdx === 0) setBreathingCount(prev => prev + 1);
+                setBreathingPhase(phases[nextIdx]);
+              }, durations[phases.indexOf(breathingPhase)]);
+        
+              return () => clearTimeout(timer);
+            } else if (breathingCount >= 4 && helpStep === 'breathing') {
+              setTimeout(() => setHelpStep('complete'), 1000);
+            }
+          }, [breathingPhase, breathingCount, helpStep]);
+        
+          const getBreathingScale = () => {
+            if (breathingPhase === 'Breathe In') return 'scale-125';
+            if (breathingPhase === 'Breathe Out') return 'scale-75';
+            return 'scale-100';
+          };
+        
+          const getBreathingColor = () => {
+            if (breathingPhase === 'Breathe In') return 'bg-gradient-to-br from-blue-300 to-blue-400';
+            if (breathingPhase === 'Breathe Out') return 'bg-gradient-to-br from-green-200 to-green-300';
+            return 'bg-gradient-to-br from-purple-200 to-purple-300';
+          };
+        
+          const getDaysInMonth = (date) => {
+            const year = date.getFullYear();
+            const month = date.getMonth();
+            const firstDay = new Date(year, month, 1);
+            const lastDay = new Date(year, month + 1, 0);
+            return {
+              daysInMonth: lastDay.getDate(),
+              startingDayOfWeek: firstDay.getDay(),
+              year,
+              month
+            };
+          };
+        
+          const getCompletionForDate = (date) => {
+            const key = getDateKey(date);
+            const record = dailyRecords[key];
+            if (!record || !record.habits || record.habits.length === 0) return null;
+            return (record.habits.filter(h => h.completed).length / record.habits.length) * 100;
+          };
+        
+          const renderCalendar = () => {
+            const { daysInMonth, startingDayOfWeek, year, month } = getDaysInMonth(calendarMonth);
+            const days = [];
+            
+            for (let i = 0; i < startingDayOfWeek; i++) {
+              days.push(<div key={`empty-${i}`} className="aspect-square"></div>);
+            }
+            
+            for (let day = 1; day <= daysInMonth; day++) {
+              const date = new Date(year, month, day);
+              const completion = getCompletionForDate(date);
+              const isToday = getDateKey(date) === getDateKey(currentDate);
+              
+              days.push(
+                <div
+                  key={day}
+                  className={`aspect-square flex flex-col items-center justify-center rounded-lg transition-all duration-200 ${
+                    isToday ? 'ring-2 ring-blue-500 bg-blue-50' : 'hover:bg-gray-100'
+                  }`}
+                >
+                  <span className={`text-sm font-semibold ${isToday ? 'text-blue-600' : 'text-gray-700'}`}>
+                    {day}
+                  </span>
+                  {completion !== null && (
+                    <div className={`w-2 h-2 rounded-full mt-1 ${
+                      completion === 100 ? 'bg-green-500' :
+                      completion >= 75 ? 'bg-blue-500' :
+                      completion >= 50 ? 'bg-yellow-500' : 'bg-red-400'
+                    }`}></div>
+                  )}
+                </div>
+              );
+            }
+            return days;
+          };
+        
+          if (!isLoggedIn) {
+            return (
+              <div className="min-h-screen bg-gradient-to-br from-blue-600 via-purple-600 to-blue-800 flex items-center justify-center p-4">
+                <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8">
+                  <div className="text-center mb-8">
+                    <Heart className="text-blue-600 mx-auto mb-4 animate-pulse" size={56} />
+                    <h1 className="text-3xl font-bold text-gray-800 mb-2">Faithful Steps</h1>
+                    <p className="text-gray-600">Build holy and healthy habits</p>
+                  </div>
+        
+                  {showLogin ? (
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-800 mb-6">Login</h2>
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                      />
+                      <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleLogin()}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6"
+                      />
+                      <button
+                        onClick={handleLogin}
+                        className="w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 mb-4"
+                      >
+                        Login
+                      </button>
+                      <p className="text-center text-gray-600">
+                        Don't have an account?{' '}
+                        <button onClick={() => setShowLogin(false)} className="text-blue-600 font-semibold hover:underline">
+                          Register
+                        </button>
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <h2 className="text-2xl font-bold text-gray-800 mb-6">Create Account</h2>
+                      <input
+                        type="text"
+                        placeholder="Full Name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                      />
+                      <input
+                        type="email"
+                        placeholder="Email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-4"
+                      />
+                      <input
+                        type="password"
+                        placeholder="Password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        onKeyPress={(e) => e.key === 'Enter' && handleRegister()}
+                        className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 mb-6"
+                      />
+                      <button
+                        onClick={handleRegister}
+                        className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white py-3 rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 active:scale-95 mb-4"
+                      >
+                        Create Account
+                      </button>
+                      <p className="text-center text-gray-600">
+                        Already have an account?{' '}
+                        <button onClick={() => setShowLogin(true)} className="text-blue-600 font-semibold hover:underline">
+                          Login
+                        </button>
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          }
+        
+          return (
+            <div className="min-h-screen bg-gradient-to-br from-blue-50 via-green-50 to-blue-50 relative overflow-hidden">
+              <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-20">
+                <div className="absolute top-20 left-10 w-64 h-64 bg-blue-200 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '4s' }}></div>
+                <div className="absolute bottom-20 right-10 w-96 h-96 bg-green-200 rounded-full blur-3xl animate-pulse" style={{ animationDuration: '6s' }}></div>
+              </div>
+        
+              {showCelebration && (
+                <div className="fixed inset-0 pointer-events-none z-40 flex items-center justify-center">
+                  <Sparkles className="text-yellow-400 drop-shadow-lg animate-bounce" size={80} />
+                </div>
+              )}
+        
+              <header className="bg-white/80 backdrop-blur-md shadow-sm border-b border-blue-100 sticky top-0 z-30">
+                <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <Heart className="text-blue-600 animate-pulse" size={32} />
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-800">Faithful Steps</h1>
+                      <p className="text-xs text-gray-500">{currentDate.toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => setShowCalendar(true)} className="p-2 rounded-full hover:bg-blue-100 transition-all" title="Calendar">
+                      <Calendar size={24} className="text-blue-600" />
+                    </button>
+                    <button onClick={() => setShowAnalytics(true)} className="p-2 rounded-full hover:bg-purple-100 transition-all" title="Analytics">
+                      <BarChart3 size={24} className="text-purple-600" />
+                    </button>
+                    <button onClick={() => setShowProfile(true)} className="p-2 rounded-full hover:bg-gray-100 transition-all" title="Profile">
+                      <User size={24} className="text-gray-600" />
+                    </button>
+                    <button
+                      onClick={openHelp}
+                      className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-6 py-2.5 rounded-full font-semibold shadow-lg transition-all flex items-center gap-2 transform hover:scale-105"
+                    >
+                      <AlertCircle size={20} />
+                      <span>HELP</span>
+                    </button>
+                  </div>
+                </div>
+              </header>
+        
+              <main className="max-w-6xl mx-auto px-4 py-8 relative z-10">
+                <div className="bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white rounded-2xl p-6 mb-6 shadow-xl">
+                  <div className="flex items-start gap-4">
+                    <Activity className="flex-shrink-0 mt-1" size={32} />
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold mb-2">Today's Prediction</h3>
+                      <p className="text-purple-100 mb-3">{todayPrediction.message}</p>
+                      <div className="flex flex-wrap items-center gap-3 text-sm">
+                        <span className="bg-white/20 px-3 py-1 rounded-full">Confidence: {todayPrediction.confidence.toUpperCase()}</span>
+                        <span className="bg-white/20 px-3 py-1 rounded-full">Trend: {todayPrediction.trend.toUpperCase()}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+        
+                <div className="bg-gradient-to-r from-blue-500 via-blue-600 to-blue-500 text-white rounded-2xl p-6 mb-6 shadow-xl">
+                  <div className="flex items-center gap-2 mb-3">
+                    <BookOpen size={24} className="animate-pulse" />
+                    <h2 className="text-xl font-semibold">Today's Inspiration</h2>
+                  </div>
+                  <p className="text-blue-50 italic text-lg">"Let your light shine before others." - Matthew 5:16</p>
+                </div>
+        
+                <div className="grid grid-cols-3 gap-4 mb-6">
+                  <div className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-lg border border-green-100 transform transition-all hover:scale-105">
+                    <div className="text-center">
+                      <Flame className="text-orange-500 mx-auto mb-2" size={32} />
+                      <p className="text-gray-600 text-xs mb-1">Victories</p>
+                      <p className="text-3xl font-bold text-green-600">{temptationsOvercome}</p>
+                    </div>
+                  </div>
+                  <div className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-lg border border-blue-100 transform transition-all hover:scale-105">
+                    <div className="text-center">
+                      <Check className="text-blue-500 mx-auto mb-2" size={32} />
+                      <p className="text-gray-600 text-xs mb-1">Today</p>
+                      <p className="text-3xl font-bold text-blue-600">{completedCount}/{habits.length}</p>
+                    </div>
+                  </div>
+                  <div className="bg-white/90 backdrop-blur rounded-2xl p-4 shadow-lg border border-purple-100 transform transition-all hover:scale-105">
+                    <div className="text-center">
+                      <TrendingUp className="text-purple-500 mx-auto mb-2" size={32} />
+                      <p className="text-gray-600 text-xs mb-1">Streaks</p>
+                      <p className="text-3xl font-bold text-purple-600">{totalStreak}</p>
+                    </div>
+                  </div>
+                </div>
+        
+                <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl p-6 mb-6">
+                  <div className="flex items-center justify-between mb-5">
+                    <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                      <Calendar className="text-blue-600" size={24} />
+                      Today's Habits
+                    </h2>
+                    <button onClick={() => setShowAddHabit(!showAddHabit)} className="text-blue-600 hover:text-blue-700 flex items-center gap-1 transition-all hover:scale-110">
+                      <Plus size={20} />
+                      <span className="font-medium">Add</span>
+                    </button>
+                  </div>
+        
+                  {showAddHabit && (
+                    <div className="mb-4 flex gap-2">
+                      <input
+                        type="text"
+                        value={newHabitName}
+                        onChange={(e) => setNewHabitName(e.target.value)}
+                        placeholder="New habit name..."
+                        className="flex-1 px-4 py-2.5 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onKeyPress={(e) => e.key === 'Enter' && addHabit()}
+                        autoFocus
+                      />
+                      <button onClick={addHabit} className="bg-blue-600 text-white px-5 py-2.5 rounded-xl hover:bg-blue-700 transition-all font-medium transform hover:scale-105">
+                        Add
+                      </button>
+                    </div>
+                  )}
+        
+                  <div className="space-y-3">
+                    {habits.map((habit) => (
+                      <div key={habit.id} className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-xl hover:from-gray-100 hover:to-gray-200 transition-all transform hover:scale-[1.02]">
+                        <div className="flex items-center gap-4 flex-1">
+                          <button
+                            onClick={() => toggleHabit(habit.id)}
+                            className={`w-10 h-10 rounded-full flex items-center justify-center transition-all transform hover:scale-110 ${
+                              habit.completed ? 'bg-gradient-to-br from-green-400 to-green-600 text-white shadow-lg' : 'bg-gray-300 text-gray-600 hover:bg-gray-400'
+                            }`}
+                          >
+                            {habit.completed && <Check size={22} />}
+                          </button>
+                          <p className={`font-semibold transition-all flex-1 ${habit.completed ? 'text-gray-500 line-through' : 'text-gray-800'}`}>
+                            {habit.name}
+                          </p>
+                          <div className="flex items-center gap-1.5 bg-gradient-to-r from-orange-100 to-orange-200 px-4 py-1.5 rounded-full shadow-sm">
+                            <Flame className="text-orange-500" size={18} />
+                            <span className="text-orange-700 font-bold text-sm">{habit.streak}</span>
+                          </div>
+                          <button onClick={() => deleteHabit(habit.id)} className="text-gray-400 hover:text-red-500 transition-all transform hover:scale-110">
+                            <X size={20} />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+        
+                <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl p-6 mb-6">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <Heart className="text-pink-500 animate-pulse" size={24} />
+                    Whispers of God
+                  </h2>
+                  <textarea
+                    value={whisper}
+                    onChange={(e) => setWhisper(e.target.value)}
+                    placeholder="What is God speaking to your heart today?..."
+                    className="w-full h-32 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none transition-all"
+                  />
+                </div>
+        
+                <div className="bg-white/90 backdrop-blur rounded-2xl shadow-xl p-6">
+                  <h2 className="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <BookOpen className="text-blue-500" size={24} />
+                    Today's Verse or Quote
+                  </h2>
+                  <textarea
+                    value={verse}
+                    onChange={(e) => setVerse(e.target.value)}
+                    placeholder="Paste a Bible verse or quote that inspired you today..."
+                    className="w-full h-24 px-4 py-3 border-2 border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none transition-all"
+                  />
+                </div>
+              </main>
+        
+              {/* Calendar Modal */}
+              {showCalendar && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                  <div className="bg-white rounded-3xl max-w-2xl w-full shadow-2xl transform transition-all">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-gray-800">Calendar</h2>
+                        <button onClick={() => setShowCalendar(false)} className="text-gray-400 hover:text-gray-600 transition-all transform hover:scale-110">
+                          <X size={28} />
+                        </button>
+                      </div>
+                      
+                      <div className="flex items-center justify-between mb-6">
+                        <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1))} className="p-2 hover:bg-gray-100 rounded-full transition-all">
+                          <ChevronLeft size={24} />
+                        </button>
+                        <h3 className="text-xl font-semibold">
+                          {calendarMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                        </h3>
+                        <button onClick={() => setCalendarMonth(new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1))} className="p-2 hover:bg-gray-100 rounded-full transition-all">
+                          <ChevronRight size={24} />
+                        </button>
+                      </div>
+        
+                      <div className="grid grid-cols-7 gap-2 mb-2">
+                        {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                          <div key={day} className="text-center text-sm font-semibold text-gray-600 py-2">
+                            {day}
+                          </div>
+                        ))}
+                      </div>
+        
+                      <div className="grid grid-cols-7 gap-2">
+                        {renderCalendar()}
+                      </div>
+        
+                      <div className="mt-6 flex items-center justify-center gap-6 text-sm">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                          <span className="text-gray-600">100%</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                          <span className="text-gray-600">75%+</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                          <span className="text-gray-600">50%+</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 rounded-full bg-red-400"></div>
+                          <span className="text-gray-600">Below 50%</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+        
+              {/* Analytics Modal */}
+              {showAnalytics && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                  <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-gray-800">Analytics - Last 5 Days</h2>
+                        <button onClick={() => setShowAnalytics(false)} className="text-gray-400 hover:text-gray-600 transition-all transform hover:scale-110">
+                          <X size={28} />
+                        </button>
+                      </div>
+        
+                      {last5DaysAnalytics.some(d => d.totalHabits > 0) ? (
+                        <div className="space-y-4">
+                          {last5DaysAnalytics.map((day, idx) => (
+                            <div key={idx} className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-5 border-2 border-blue-100">
+                              <div className="flex items-center justify-between mb-3">
+                                <h3 className="text-lg font-bold text-gray-800">{day.date}</h3>
+                                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                                  day.completionRate === 100 ? 'bg-green-500 text-white' :
+                                  day.completionRate >= 75 ? 'bg-blue-500 text-white' :
+                                  day.completionRate >= 50 ? 'bg-yellow-500 text-white' :
+                                  day.totalHabits > 0 ? 'bg-red-400 text-white' : 'bg-gray-300 text-gray-600'
+                                }`}>
+                                  {day.totalHabits > 0 ? `${Math.round(day.completionRate)}%` : 'No Data'}
+                                </span>
+                              </div>
+                              
+                              {day.totalHabits > 0 ? (
+                                <div>
+                                  <div className="w-full bg-gray-200 rounded-full h-4 mb-3">
+                                    <div
+                                      className="bg-gradient-to-r from-green-400 to-green-600 h-4 rounded-full transition-all duration-500"
+                                      style={{ width: `${day.completionRate}%` }}
+                                    ></div>
+                                  </div>
+                                  <div className="flex items-center justify-between text-sm text-gray-600">
+                                    <span>Completed: {day.habitsCompleted}/{day.totalHabits}</span>
+                                    <span>Victories: {day.victories}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-gray-500 text-sm">No habits tracked this day</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="text-center py-12">
+                          <BarChart3 className="mx-auto text-gray-300 mb-4" size={64} />
+                          <p className="text-gray-500 text-lg">No data available yet</p>
+                          <p className="text-gray-400 text-sm mt-2">Start tracking your habits to see analytics</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+        
+              {/* Profile Modal */}
+              {showProfile && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                  <div className="bg-white rounded-3xl max-w-md w-full shadow-2xl">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-gray-800">Profile</h2>
+                        <button onClick={() => setShowProfile(false)} className="text-gray-400 hover:text-gray-600 transition-all transform hover:scale-110">
+                          <X size={28} />
+                        </button>
+                      </div>
+        
+                      <div className="text-center mb-6">
+                        <div className="w-24 h-24 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                          <span className="text-white text-3xl font-bold">{name.charAt(0).toUpperCase()}</span>
+                        </div>
+                        <h3 className="text-xl font-bold text-gray-800">{name}</h3>
+                        <p className="text-gray-600 text-sm">{currentUser?.email}</p>
+                      </div>
+        
+                      <div className="space-y-4 mb-6">
+                        <div className="bg-gradient-to-r from-green-50 to-blue-50 rounded-xl p-4 border border-green-200">
+                          <p className="text-gray-600 text-sm">Total Victories</p>
+                          <p className="text-3xl font-bold text-green-600">{temptationsOvercome}</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl p-4 border border-blue-200">
+                          <p className="text-gray-600 text-sm">Active Habits</p>
+                          <p className="text-3xl font-bold text-blue-600">{habits.length}</p>
+                        </div>
+                        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl p-4 border border-purple-200">
+                          <p className="text-gray-600 text-sm">Total Streak Days</p>
+                          <p className="text-3xl font-bold text-purple-600">{totalStreak}</p>
+                        </div>
+                      </div>
+        
+                      <button
+                        onClick={handleLogout}
+                        className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 rounded-xl font-semibold shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-2"
+                      >
+                        <LogOut size={20} />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+        
+              {/* Help Modal */}
+              {showHelp && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                  <div className="bg-white rounded-3xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl">
+                    <div className="p-6">
+                      <div className="flex items-center justify-between mb-6">
+                        <h2 className="text-2xl font-bold text-gray-800">
+                          {helpStep === 'menu' && '🙏 How Can We Help?'}
+                          {helpStep === 'verse' && '📖 Scripture for Strength'}
+                          {helpStep === 'breathing' && '🫁 Breathing Exercise'}
+                          {helpStep === 'distraction' && '🏃 Healthy Distraction'}
+                          {helpStep === 'complete' && '✨ You Did It!'}
+                        </h2>
+                        <button onClick={closeHelp} className="text-gray-400 hover:text-gray-600 transition-all transform hover:scale-110">
+                          <X size={28} />
+                        </button>
+                      </div>
+        
+                      {helpStep === 'menu' && (
+                        <div className="space-y-4">
+                          <p className="text-gray-600 mb-6">Choose what you need right now:</p>
+                          
+                          <button
+                            onClick={() => setHelpStep('verse')}
+                            className="w-full bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 text-blue-800 p-5 rounded-2xl text-left transition-all border-2 border-blue-200 transform hover:scale-[1.02] hover:shadow-lg"
+                          >
+                            <div className="flex items-center gap-4">
+                              <BookOpen size={32} className="text-blue-600" />
+                              <div>
+                                <p className="font-semibold text-lg">Bible Verse</p>
+                                <p className="text-sm text-blue-600">Find strength in Scripture</p>
+                              </div>
+                            </div>
+                          </button>
+        
+                          <button
+                            onClick={startBreathingExercise}
+                            className="w-full bg-gradient-to-r from-green-50 to-green-100 hover:from-green-100 hover:to-green-200 text-green-800 p-5 rounded-2xl text-left transition-all border-2 border-green-200 transform hover:scale-[1.02] hover:shadow-lg"
+                          >
+                            <div className="flex items-center gap-4">
+                              <Wind size={32} className="text-green-600" />
+                              <div>
+                                <p className="font-semibold text-lg">Breathing Exercise</p>
+                                <p className="text-sm text-green-600">Calm your mind and body</p>
+                              </div>
+                            </div>
+                          </button>
+        
+                          <button
+                            onClick={() => setHelpStep('distraction')}
+                            className="w-full bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-800 p-5 rounded-2xl text-left transition-all border-2 border-purple-200 transform hover:scale-[1.02] hover:shadow-lg"
+                          >
+                            <div className="flex items-center gap-4">
+                              <Dumbbell size={32} className="text-purple-600" />
+                              <div>
+                                <p className="font-semibold text-lg">Distraction Activity</p>
+                                <p className="text-sm text-purple-600">Redirect your energy</p>
+                              </div>
+                            </div>
+                          </button>
+                        </div>
+                      )}
+        
+                      {helpStep === 'verse' && (
+                        <div>
+                          <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 mb-6 border-2 border-blue-200 shadow-inner">
+                            <BookOpen className="text-blue-600 mb-4 mx-auto" size={40} />
+                            <p className="text-lg text-blue-900 leading-relaxed italic text-center">
+                              {selectedVerse}
+                            </p>
+                          </div>
+                          <div className="flex gap-3">
+                            <button
+                              onClick={() => setHelpStep('menu')}
+                              className="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-xl font-semibold transition-all transform hover:scale-105"
+                            >
+                              Back
+                            </button>
+                            <button
+                              onClick={completeHelp}
+                              className="flex-1 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white py-3 rounded-xl font-semibold transition-all shadow-lg transform hover:scale-105"
+                            >
+                              I Feel Better ✓
+                            </button>
+                          </div>
+                        </div>
+                      )}
+        
+                      {helpStep === 'breathing' && (
+                        <div className="text-center">
+                          <div className="mb-8 flex justify-center">
+                            <div className={`w-56 h-56 rounded-full flex items-center justify-center transition-all duration-[4000ms] ease-in-out ${getBreathingScale()} ${getBreathingColor()} shadow-2xl`}>
+                              <div className="text-center">
+                                <p className="text-3xl font-bold text-gray-800 mb-2">{breathingPhase}</p>
+                                <p className="text-gray-700 font-medium">Round {breathingCount + 1}/4</p>
+                              </div>
+                            </div>
+                          </div>
+                          <p className="text-gray-600 mb-6 text-lg">Follow the rhythm of the circle</p>
+                          <div className="flex gap-3 justify-center">
+                            {[0, 1, 2, 3].map(i => (
+                              <div
+                                key={i}
+                                className={`w-4 h-4 rounded-full transition-all duration-500 ${
+                                  i < breathingCount ? 'bg-green-500 scale-110' : 'bg-gray-300'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                      )}
+        
+                      {helpStep === 'distraction' && (
+                        <div className="space-y-4">
+                          <p className="text-gray-600 mb-4">Choose a healthy activity:</p>
+                          {distractionActivities.map((activity, idx) => {
+                            const Icon = activity.icon;
+                            return (
+                              <button
+                                key={idx}
+                                onClick={completeHelp}
+                                className="w-full bg-gradient-to-r from-purple-50 to-purple-100 hover:from-purple-100 hover:to-purple-200 text-purple-800 p-5 rounded-2xl text-left transition-all border-2 border-purple-200 transform hover:scale-[1.02] hover:shadow-lg"
+                              >
+                                <div className="flex items-center gap-4">
+                                  <Icon size={32} className="text-purple-600" />
+                                  <div>
+                                    <p className="font-semibold text-lg">{activity.title}</p>
+                                    <p className="text-sm text-purple-600">{activity.description}</p>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                          <button
+                            onClick={() => setHelpStep('menu')}
+                            className="w-full bg-gray-200 hover:bg-gray-300 text-gray-800 py-3 rounded-xl font-semibold transition-all mt-4 transform hover:scale-105"
+                          >
+                            Back
+                          </button>
+                        </div>
+                      )}
+        
+                      {helpStep === 'complete' && (
+                        <div className="text-center">
+                          <div className="w-28 h-28 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mx-auto mb-6 shadow-2xl animate-bounce">
+                            <Check size={56} className="text-white" />
+                          </div>
+                          <h3 className="text-3xl font-bold text-gray-800 mb-3">You Overcame! 🎉</h3>
+                          <p className="text-gray-600 mb-6 text-lg">
+                            You are stronger than you think. God is with you every step.
+                          </p>
+                          <div className="bg-gradient-to-r from-blue-50 to-green-50 rounded-2xl p-4 border-2 border-green-200">
+                            <p className="text-green-700 font-semibold">Victory #{temptationsOvercome + 1} recorded! 🏆</p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+        
+              <footer className="bg-white/80 backdrop-blur border-t border-gray-200 mt-12 py-6 relative z-10">
+                <div className="max-w-6xl mx-auto px-4 text-center text-gray-600">
+                  <p className="text-sm flex items-center justify-center gap-2">
+                    Building holy and healthy habits, one day at a time 
+                    <Heart size={16} className="text-red-500 animate-pulse" />
+                  </p>
+                </div>
+              </footer>
+            </div>
+          );
+        }
     </script>
 </body>
 </html>
