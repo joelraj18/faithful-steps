@@ -6,7 +6,11 @@
     <title>Faithful Steps - Habit Tracker</title>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @keyframes fadeIn {
@@ -20,8 +24,12 @@
     <div id="root"></div>
     
     <script type="text/babel">
-        import React, { useState, useEffect, useCallback, useMemo } from 'react';
-        import { Calendar, Flame, Heart, BookOpen, Plus, X, Check, AlertCircle, Wind, Dumbbell, PenTool, Sparkles, TrendingUp, BarChart3, User, LogOut, ChevronLeft, ChevronRight, Activity } from 'lucide-react';
+        // --- FIX: Use global variables instead of ES Module imports ---
+        // Destructure Hooks from the global React object
+        const { useState, useEffect, useCallback, useMemo } = React;
+        
+        // Destructure Icons from the global lucide object
+        const { Calendar, Flame, Heart, BookOpen, Plus, X, Check, AlertCircle, Wind, Dumbbell, PenTool, Sparkles, TrendingUp, BarChart3, User, LogOut, ChevronLeft, ChevronRight, Activity } = lucide; 
         
         // Simulated Database
         const DB = {
@@ -53,7 +61,8 @@
           }
         };
         
-        export default function FaithfulSteps() {
+        // FIX: Removed 'export default'
+        function FaithfulSteps() {
           const [isLoggedIn, setIsLoggedIn] = useState(false);
           const [showLogin, setShowLogin] = useState(true);
           const [email, setEmail] = useState('');
@@ -1004,6 +1013,9 @@
             </div>
           );
         }
+
+        // FIX: Standard React 18 render call
+        ReactDOM.createRoot(document.getElementById('root')).render(<FaithfulSteps />);
     </script>
 </body>
 </html>
